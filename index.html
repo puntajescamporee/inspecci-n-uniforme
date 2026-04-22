@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evaluación de Uniformes — Campamento</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-primary: #1D9E75;
+      --color-primary-light: #E1F5EE;
+      --color-primary-dark: #0F6E56;
+      --color-bg: #f9f9f7;
+      --color-surface: #ffffff;
+      --color-border: rgba(0,0,0,0.1);
+      --color-border-strong: rgba(0,0,0,0.2);
+      --color-text: #1a1a18;
+      --color-text-muted: #6b6b67;
+      --color-danger: #993C1D;
+      --color-danger-light: #FAECE7;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font: 'Segoe UI', system-ui, sans-serif;
+    }
+    body { font-family: var(--font); background: var(--color-bg); color: var(--color-text); min-height: 100vh; }
+
+    /* Layout */
+    .app-wrap { max-width: 720px; margin: 0 auto; padding: 1rem; }
+
+    /* Top bar */
+    .topbar { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); border-bottom: 0.5px solid var(--color-border); padding: 10px 1.25rem; margin: -1rem -1rem 1.5rem; position: sticky; top: 0; z-index: 10; }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .camp-logo { width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary-light); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .camp-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .camp-title { font-size: 15px; font-weight: 600; }
+    .camp-subtitle { font-size: 11px; color: var(--color-text-muted); }
+
+    /* Tabs */
+    .tab-bar { display: flex; gap: 4px; border-bottom: 0.5px solid var(--color-border); margin-bottom: 1.5rem; }
+    .tab-btn { padding: 9px 18px; border: none; background: none; cursor: pointer; font-size: 14px; color: var(--color-text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: var(--font); transition: all .15s; }
+    .tab-btn.active { color: var(--color-text); border-bottom-color: var(--color-primary); font-weight: 600; }
+
+    /* Cards */
+    .card { background: var(--color-surface); border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .card-header { font-size: 11px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .75rem; }
+
+    /* Badges */
+    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+    .badge-kids    { background: #FAEEDA; color: #854F0B; }
+    .badge-junior  { background: #E6F1FB; color: #185FA5; }
+    .badge-senior  { background: #E1F5EE; color: #0F6E56; }
+
+    /* Club list */
+    .club-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--color-border); cursor: pointer; transition: background .1s; }
+    .club-item:last-child { border-bottom: none; }
+    .club-item:hover { background: var(--color-bg); margin: 0 -1.25rem; padding: 10px 1.25rem; border-radius: 6px; }
+    .club-name { font-size: 14px; font-weight: 600; }
+    .club-meta { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+
+    /* Eval table */
+    .eval-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .eval-table th { text-align: left; padding: 6px 8px; color: var(--color-text-muted); font-weight: 600; border-bottom: 0.5px solid var(--color-border); }
+    .eval-table th:not(:first-child) { text-align: center; width: 80px; }
+    .eval-table td { padding: 8px; border-bottom: 0.5px solid var(--color-border); vertical-align: middle; }
+    .eval-table td:not(:first-child) { text-align: center; }
+    .eval-table input[type=number] { width: 60px; text-align: center; border: 0.5px solid var(--color-border-strong); border-radius: 6px; padding: 4px 6px; font-size: 13px; font-family: var(--font); }
+    .total-positive { color: var(--color-primary-dark); font-weight: 600; }
+    .total-zero     { color: var(--color-danger); font-weight: 600; }
+    .section-total td { background: var(--color-bg); font-weight: 600; padding: 8px; }
+
+    /* Score */
+    .score-big { font-size: 42px; font-weight: 700; color: var(--color-primary); }
+
+    /* Forms */
+    .form-group { margin-bottom: .875rem; }
+    .form-label { font-size: 13px; color: var(--color-text-muted); display: block; margin-bottom: 4px; }
+    .form-input { width: 100%; border: 0.5px solid var(--color-border-strong); border-radius: var(--radius-md); padding: 8px 12px; font-size: 14px; font-family: var(--font); background: var(--color-surface); }
+    .form-input:focus { outline: none; border-color: var(--color-primary); }
+
+    /* Buttons */
+    .btn { padding: 8px 18px; border-radius: var(--radius-md); border: 0.5px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text); font-size: 13px; cursor: pointer; font-family: var(--font); transition: all .15s; }
+    .btn:hover { background: var(--color-bg); }
+    .btn-primary { background: var(--color-primary); color: white; border-color: var(--color-primary); font-weight: 600; }
+    .btn-primary:hover { background: var(--color-primary-dark); border-color: var(--color-primary-dark); }
+    .btn-sm { padding: 4px 12px; font-size: 12px; }
+    .btn-danger { color: var(--color-danger); border-color: #f5c4b3; }
+    .btn-danger:hover { background: var(--color-danger-light); }
+
+    /* Metrics */
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin-bottom: 1.5rem; }
+    .metric-card { background: var(--color-bg); border-radius: var(--radius-md); padding: 1rem; border: 0.5px solid var(--color-border); }
+    .metric-val { font-size: 26px; font-weight: 700; }
+    .metric-lbl { font-size: 12px; color: var(--color-text-muted); margin-top: 4px; }
+
+    /* Member input */
+    .member-header { display: flex; align-items: center; gap: 10px; background: var(--color-bg); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .member-header label { font-size: 13px; color: var(--color-text-muted); }
+    .member-header input { width: 72px; border: 0.5px solid var(--color-border-strong); border-radius: 6px; padding: 4px 8px; font-size: 14px; font-weight: 600; text-align: center; font-family: var(--font); }
+
+    /* Category sections */
+    .cat-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--color-text-muted); margin-bottom: .5rem; padding-bottom: 4px; border-bottom: 0.5px solid var(--color-border); }
+    .cat-section { margin-bottom: 1.5rem; }
+
+    /* Eval tabs */
+    .eval-tabs { display: flex; gap: 8px; margin-bottom: 1rem; }
+    .eval-tab { padding: 6px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 0.5px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text-muted); font-family: var(--font); transition: all .15s; }
+    .eval-tab.active { background: var(--color-primary); color: white; border-color: var(--color-primary); font-weight: 600; }
+
+    /* Login */
+    .login-outer { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--color-bg); }
+    .login-box { background: var(--color-surface); border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 340px; }
+    .login-logo-wrap { text-align: center; margin-bottom: 1.5rem; }
+    .login-icon { width: 60px; height: 60px; background: var(--color-primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; }
+    .login-camp-name { font-size: 15px; font-weight: 700; }
+    .login-camp-sub { font-size: 12px; color: var(--color-text-muted); }
+
+    /* Back btn */
+    .back-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-text-muted); cursor: pointer; margin-bottom: 1rem; background: none; border: none; font-family: var(--font); }
+    .back-btn:hover { color: var(--color-text); }
+
+    /* Admin sub-nav */
+    .sub-nav { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--color-text); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 2rem; color: var(--color-text-muted); font-size: 14px; }
+
+    /* Ranking highlight */
+    tr.rank-1 td { background: #FAEEDA; }
+    tr.rank-2 td { background: #F1EFE8; }
+    tr.rank-3 td { background: #E1F5EE; }
+
+    @media (max-width: 480px) {
+      .eval-table th:nth-child(2), .eval-table td:nth-child(2) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="login-outer">
+    <div class="login-box">
+      <div class="login-logo-wrap">
+        <div class="login-icon" id="login-logo-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="login-camp-name" id="login-camp-name">Campamento 2025</div>
+        <div class="login-camp-sub">Evaluación de uniformes</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Usuario</label>
+        <input class="form-input" id="login-user" placeholder="ej. Pablo Pérez" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <input class="form-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()" />
+      </div>
+      <div id="login-error" style="font-size:12px;color:var(--color-danger);margin-bottom:8px;display:none">Usuario o contraseña incorrectos</div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-page" style="display:none">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="camp-logo" id="topbar-logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="camp-title" id="topbar-camp-name">Campamento 2025</div>
+        <div class="camp-subtitle" id="topbar-user-role">Evaluador</div>
+      </div>
+    </div>
+    <button class="btn btn-sm" onclick="logout()">Salir</button>
+  </div>
+
+  <div class="app-wrap">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('evaluador')" id="tab-evaluador">Evaluación</button>
+      <button class="tab-btn" onclick="switchTab('administrador')" id="tab-admin" style="display:none">Administración</button>
+    </div>
+
+    <!-- ========== EVALUADOR ========== -->
+    <div id="sec-evaluador">
+
+      <!-- Club list -->
+      <div id="ev-club-list">
+        <div class="cat-section">
+          <div class="cat-title">Kids (Aventureros)</div>
+          <div class="card" id="clubs-kids"><div class="loading">Cargando...</div></div>
+        </div>
+        <div class="cat-section">
+          <div class="cat-title">Junior (Conquistadores)</div>
+          <div class="card" id="clubs-junior"><div class="loading">Cargando...</div></div>
+        </div>
+        <div class="cat-section">
+          <div class="cat-title">Senior (Guías Mayores)</div>
+          <div class="card" id="clubs-senior"><div class="loading">Cargando...</div></div>
+        </div>
+      </div>
+
+      <!-- Club detail -->
+      <div id="ev-club-detail" style="display:none">
+        <button class="back-btn" onclick="backToList()">← Volver a clubes</button>
+        <div class="card">
+          <div id="detail-badge" style="margin-bottom:6px"></div>
+          <div style="font-size:18px;font-weight:700" id="detail-club-name"></div>
+          <div class="member-header" style="margin-top:10px">
+            <label>Cantidad de miembros:</label>
+            <input type="number" min="1" id="member-count" value="10" onchange="recalcAll()" />
+            <span style="font-size:12px;color:var(--color-text-muted)">personas en fila</span>
+          </div>
+        </div>
+
+        <div class="eval-tabs">
+          <button class="eval-tab active" onclick="switchEvalGroup('directiva')" id="etab-directiva">Directiva</button>
+          <button class="eval-tab" onclick="switchEvalGroup('miembros')" id="etab-miembros">Miembros</button>
+        </div>
+
+        <!-- Aseo personal -->
+        <div class="card">
+          <div class="card-header">Aseo personal y otros — 100 pts</div>
+          <table class="eval-table" id="table-aseo">
+            <thead><tr><th>Ítem</th><th>Valor</th><th>Faltas</th><th>Total</th></tr></thead>
+            <tbody></tbody>
+            <tfoot><tr class="section-total"><td colspan="2">Total sección</td><td></td><td id="aseo-total">100.0</td></tr></tfoot>
+          </table>
+        </div>
+
+        <!-- Uniforme -->
+        <div class="card">
+          <div class="card-header" id="uniform-section-title">Uniforme — 150 pts</div>
+          <table class="eval-table" id="table-uniform">
+            <thead><tr><th>Ítem</th><th>Valor</th><th>Faltas</th><th>Total</th></tr></thead>
+            <tbody></tbody>
+            <tfoot><tr class="section-total"><td colspan="2">Total sección</td><td></td><td id="uniform-total">150.0</td></tr></tfoot>
+          </table>
+        </div>
+
+        <div class="card" style="text-align:center;padding:1.5rem">
+          <div class="score-big" id="grand-total">250.0</div>
+          <div style="font-size:13px;color:var(--color-text-muted);margin-top:4px">Puntaje total · de 250 pts posibles</div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-bottom:1.5rem" onclick="saveEval()">Guardar evaluación</button>
+      </div>
+    </div>
+
+    <!-- ========== ADMINISTRADOR ========== -->
+    <div id="sec-administrador" style="display:none">
+      <div class="sub-nav">
+        <button class="eval-tab active" onclick="switchAdminTab('resumen')"  id="atab-resumen">Resumen</button>
+        <button class="eval-tab"        onclick="switchAdminTab('clubes')"   id="atab-clubes">Gestión de clubes</button>
+        <button class="eval-tab"        onclick="switchAdminTab('usuarios')" id="atab-usuarios">Usuarios</button>
+        <button class="eval-tab"        onclick="switchAdminTab('config')"   id="atab-config">Configuración</button>
+      </div>
+
+      <!-- Resumen -->
+      <div id="admin-resumen">
+        <div class="metrics-grid" id="admin-metrics"></div>
+        <div class="card">
+          <div class="card-header">Ranking de clubes</div>
+          <table class="eval-table">
+            <thead><tr><th>#</th><th>Club</th><th>Categoría</th><th>Miembros</th><th>Puntaje</th><th>Estado</th></tr></thead>
+            <tbody id="admin-results-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Clubes -->
+      <div id="admin-clubes" style="display:none">
+        <div class="card">
+          <div class="card-header">Agregar club</div>
+          <div class="form-group">
+            <label class="form-label">Nombre del club</label>
+            <input class="form-input" id="new-club-name" placeholder="ej. Club Aventura" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Categoría</label>
+            <select class="form-input" id="new-club-cat">
+              <option value="kids">Kids (Aventureros)</option>
+              <option value="junior">Junior (Conquistadores)</option>
+              <option value="senior">Senior (Guías Mayores)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Asignar evaluador</label>
+            <select class="form-input" id="new-club-eval"></select>
+          </div>
+          <button class="btn btn-primary" onclick="addClub()">Agregar club</button>
+        </div>
+        <div class="card">
+          <div class="card-header">Clubes registrados</div>
+          <div id="admin-clubs-list"></div>
+        </div>
+      </div>
+
+      <!-- Usuarios -->
+      <div id="admin-usuarios" style="display:none">
+        <div class="card">
+          <div class="card-header">Usuarios registrados</div>
+          <div id="users-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">Agregar usuario</div>
+          <div class="form-group">
+            <label class="form-label">Nombre completo</label>
+            <input class="form-input" id="new-user-name" placeholder="ej. María García" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contraseña</label>
+            <input class="form-input" id="new-user-pass" placeholder="ej. mag#1234" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rol</label>
+            <select class="form-input" id="new-user-role">
+              <option value="evaluador">Evaluador</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="addUser()">Agregar usuario</button>
+        </div>
+      </div>
+
+      <!-- Configuración -->
+      <div id="admin-config" style="display:none">
+        <div class="card">
+          <div class="card-header">Nombre del campamento</div>
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input class="form-input" id="config-camp-name" value="Campamento 2025" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Logo (URL de imagen)</label>
+            <input class="form-input" id="config-logo-url" placeholder="https://..." />
+          </div>
+          <button class="btn btn-primary" onclick="saveConfig()">Guardar configuración</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue, remove }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ============================================================
+  // 🔥 REEMPLAZA ESTOS VALORES CON TU CONFIGURACIÓN DE FIREBASE
+  // ============================================================
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAfKuuW6lX6pDlNf-RuFfSq9XNtJakKmRU",
+    authDomain:        "revici-1b1a3.firebaseapp.com",
+    databaseURL:       "https://revici-1b1a3-default-rtdb.firebaseio.com",
+    projectId:         "revici-1b1a3",
+    storageBucket:     "revici-1b1a3.firebasestorage.app",
+    messagingSenderId: "954618802458",
+    appId:             "1:954618802458:web:115d1f7b5cc4c72a0ebca3"
+  };
+  // ============================================================
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  // ---- Expose DB helpers to global scope ----
+  window._db = db;
+  window._dbRef  = ref;
+  window._dbSet  = set;
+  window._dbGet  = get;
+  window._dbOnValue = onValue;
+  window._dbRemove  = remove;
+
+  // ---- Seed default data if DB is empty ----
+  const rootRef = ref(db, '/');
+  get(rootRef).then(snap => {
+    if (!snap.exists()) {
+      set(ref(db, 'config'), { campName: 'Campamento 2025', logoUrl: '' });
+      set(ref(db, 'users'), {
+        'admin': { name: 'Administrador', pass: 'admin#1234', role: 'admin' },
+        'pablo': { name: 'Pablo Pérez',   pass: 'pap#1234',  role: 'evaluador' }
+      });
+      set(ref(db, 'clubs'), {
+        'club1': { name: 'Club Rayos de Luz', cat: 'kids',   evaluador: 'Pablo Pérez' },
+        'club2': { name: 'Club Halcones',     cat: 'junior', evaluador: 'Pablo Pérez' },
+        'club3': { name: 'Club Cóndores',     cat: 'senior', evaluador: 'Pablo Pérez' }
+      });
+    }
+    window.initApp();
+  });
+</script>
+
+<script>
+// ============================================================
+// ITEMS DE EVALUACIÓN
+// ============================================================
+const ASEO_ITEMS = [
+  { name: 'Rostro limpio',                                              val: 16.6 },
+  { name: 'Dientes limpios',                                           val: 16.6 },
+  { name: 'Manos y uñas limpias',                                      val: 16.6 },
+  { name: 'Uniforme limpio',                                           val: 16.6 },
+  { name: 'Zapatos limpios',                                           val: 16.6 },
+  { name: 'Filosofía adventista (cadenas, anillos, pulseras, piercing)', val: 16.6 }
+];
+
+const UNIFORM_ITEMS = [
+  { name: 'Pantalón reglamentario',   val: 25 },
+  { name: 'Medias reglamentarias',    val: 15 },
+  { name: 'Zapatos reglamentarios',   val: 20 },
+  { name: 'Camiseta / Camisa',        val: 30 },
+  { name: 'Riata o correa',           val: 15 },
+  { name: 'Boina reglamentaria',      val: 20 },
+  { name: 'Banda de especialidades',  val: 25 }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  campName: 'Campamento 2025',
+  logoUrl: '',
+  users: {},
+  clubs: {},
+  evals: {},
+  currentUser: null,
+  currentClub: null,
+  currentGroup: 'directiva'
+};
+let currentEvalData = { directiva: {}, miembros: {} };
+
+// ============================================================
+// INIT
+// ============================================================
+window.initApp = function() {
+  // Listen to config
+  window._dbOnValue(window._dbRef(window._db, 'config'), snap => {
+    if (snap.exists()) {
+      const d = snap.val();
+      state.campName = d.campName || 'Campamento 2025';
+      state.logoUrl  = d.logoUrl  || '';
+      document.getElementById('login-camp-name').textContent  = state.campName;
+      document.getElementById('topbar-camp-name').textContent = state.campName;
+      document.getElementById('config-camp-name').value       = state.campName;
+      document.getElementById('config-logo-url').value        = state.logoUrl;
+      updateLogo();
+    }
+  });
+  // Listen to users
+  window._dbOnValue(window._dbRef(window._db, 'users'), snap => {
+    state.users = snap.exists() ? snap.val() : {};
+    renderUsersList();
+    populateEvalSelect();
+  });
+  // Listen to clubs
+  window._dbOnValue(window._dbRef(window._db, 'clubs'), snap => {
+    state.clubs = snap.exists() ? snap.val() : {};
+    renderClubLists();
+    renderAdminClubsList();
+    renderAdminResumen();
+  });
+  // Listen to evals
+  window._dbOnValue(window._dbRef(window._db, 'evals'), snap => {
+    state.evals = snap.exists() ? snap.val() : {};
+    renderClubLists();
+    renderAdminResumen();
+  });
+};
+
+function updateLogo() {
+  const url = state.logoUrl;
+  ['topbar-logo','login-logo-icon'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (url) {
+      el.innerHTML = `<img src="${url}" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    } else {
+      el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`;
+    }
+  });
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value.trim();
+  const user = Object.values(state.users).find(x =>
+    x.name.toLowerCase() === u.toLowerCase() && x.pass === p
+  );
+  if (!user) { document.getElementById('login-error').style.display = 'block'; return; }
+  document.getElementById('login-error').style.display = 'none';
+  state.currentUser = user;
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('main-page').style.display  = '';
+  document.getElementById('topbar-user-role').textContent = user.role === 'admin' ? 'Administrador' : 'Evaluador';
+  document.getElementById('tab-admin').style.display = user.role === 'admin' ? '' : 'none';
+}
+window.doLogin = doLogin;
+
+function logout() {
+  state.currentUser = null;
+  document.getElementById('main-page').style.display  = 'none';
+  document.getElementById('login-page').style.display = '';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('tab-admin').style.display = 'none';
+  switchTab('evaluador');
+}
+window.logout = logout;
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('sec-evaluador').style.display     = tab === 'evaluador'     ? '' : 'none';
+  document.getElementById('sec-administrador').style.display = tab === 'administrador' ? '' : 'none';
+  if (tab === 'administrador') renderAdminResumen();
+}
+window.switchTab = switchTab;
+
+function switchAdminTab(tab) {
+  ['resumen','clubes','usuarios','config'].forEach(t => {
+    document.getElementById('atab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('admin-' + t).style.display = t === tab ? '' : 'none';
+  });
+}
+window.switchAdminTab = switchAdminTab;
+
+// ============================================================
+// HELPERS
+// ============================================================
+function catLabel(cat) { return { kids: 'Kids', junior: 'Junior', senior: 'Senior' }[cat] || cat; }
+function catBadgeHtml(cat) {
+  const cls = { kids:'badge-kids', junior:'badge-junior', senior:'badge-senior' }[cat] || '';
+  return `<span class="badge ${cls}">${catLabel(cat)}</span>`;
+}
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// CLUB LIST
+// ============================================================
+function renderClubLists() {
+  ['kids','junior','senior'].forEach(cat => {
+    const el = document.getElementById('clubs-' + cat);
+    if (!el) return;
+    const list = Object.entries(state.clubs).filter(([,c]) => c.cat === cat);
+    if (!list.length) {
+      el.innerHTML = '<div style="font-size:13px;color:var(--color-text-muted);padding:8px 0">Sin clubes asignados</div>';
+      return;
+    }
+    el.innerHTML = list.map(([id, c]) => {
+      const ev = state.evals && state.evals[id];
+      const score = ev
+        ? `<span style="font-size:12px;color:var(--color-primary-dark);font-weight:600">${ev.total} pts</span>`
+        : `<span style="font-size:12px;color:var(--color-text-muted)">Sin evaluar</span>`;
+      return `<div class="club-item" onclick="openClub('${id}')">
+        <div><div class="club-name">${c.name}</div><div class="club-meta">${score}</div></div>
+        <span style="color:var(--color-text-muted);font-size:20px">›</span>
+      </div>`;
+    }).join('');
+  });
+}
+
+function openClub(id) {
+  const club = state.clubs[id];
+  if (!club) return;
+  state.currentClub = { ...club, id };
+  const saved = state.evals && state.evals[id];
+  currentEvalData = saved ? JSON.parse(JSON.stringify(saved.data)) : { directiva: {}, miembros: {} };
+  document.getElementById('ev-club-list').style.display   = 'none';
+  document.getElementById('ev-club-detail').style.display = '';
+  document.getElementById('detail-club-name').textContent = club.name;
+  document.getElementById('detail-badge').innerHTML = catBadgeHtml(club.cat);
+  document.getElementById('member-count').value = saved ? (saved.members || 10) : 10;
+  switchEvalGroup('directiva');
+}
+window.openClub = openClub;
+
+function backToList() {
+  document.getElementById('ev-club-list').style.display   = '';
+  document.getElementById('ev-club-detail').style.display = 'none';
+  state.currentClub = null;
+}
+window.backToList = backToList;
+
+// ============================================================
+// EVAL TABLES
+// ============================================================
+function switchEvalGroup(group) {
+  state.currentGroup = group;
+  ['directiva','miembros'].forEach(g => {
+    document.getElementById('etab-' + g).classList.toggle('active', g === group);
+  });
+  renderEvalTables();
+}
+window.switchEvalGroup = switchEvalGroup;
+
+function renderEvalTables() {
+  buildTable('table-aseo',    ASEO_ITEMS,    'aseo');
+  buildTable('table-uniform', UNIFORM_ITEMS, 'uniform');
+  recalcAll();
+}
+
+function buildTable(tableId, items, section) {
+  const tbody = document.querySelector('#' + tableId + ' tbody');
+  const group = state.currentGroup;
+  tbody.innerHTML = items.map((item, i) => {
+    const key   = section + '_' + i;
+    const saved = (currentEvalData[group] && currentEvalData[group][key]) || 0;
+    return `<tr>
+      <td style="font-size:13px">${item.name}</td>
+      <td style="font-size:13px;font-weight:600">${item.val}</td>
+      <td><input type="number" min="0" id="inp_${section}_${i}" value="${saved}" onchange="recalcAll()" style="width:60px;text-align:center;border:0.5px solid rgba(0,0,0,.2);border-radius:6px;padding:4px 6px;font-size:13px;" /></td>
+      <td id="td_${section}_${i}" class="total-positive">${item.val.toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function recalcAll() {
+  const members = parseInt(document.getElementById('member-count').value) || 1;
+  const group   = state.currentGroup;
+  if (!currentEvalData[group]) currentEvalData[group] = {};
+  let aseoTotal = 0, uniformTotal = 0;
+
+  ASEO_ITEMS.forEach((item, i) => {
+    const inp = document.getElementById('inp_aseo_' + i);
+    if (!inp) return;
+    const faltas    = Math.min(parseInt(inp.value) || 0, members);
+    currentEvalData[group]['aseo_' + i] = faltas;
+    const deduction = (faltas / members) * item.val;
+    const total     = Math.max(0, item.val - deduction);
+    aseoTotal += total;
+    const td = document.getElementById('td_aseo_' + i);
+    if (td) { td.textContent = total.toFixed(1); td.className = total > 0 ? 'total-positive' : 'total-zero'; }
+  });
+
+  UNIFORM_ITEMS.forEach((item, i) => {
+    const inp = document.getElementById('inp_uniform_' + i);
+    if (!inp) return;
+    const faltas    = Math.min(parseInt(inp.value) || 0, members);
+    currentEvalData[group]['uniform_' + i] = faltas;
+    const deduction = (faltas / members) * item.val;
+    const total     = Math.max(0, item.val - deduction);
+    uniformTotal += total;
+    const td = document.getElementById('td_uniform_' + i);
+    if (td) { td.textContent = total.toFixed(1); td.className = total > 0 ? 'total-positive' : 'total-zero'; }
+  });
+
+  document.getElementById('aseo-total').textContent    = aseoTotal.toFixed(1);
+  document.getElementById('uniform-total').textContent = uniformTotal.toFixed(1);
+  document.getElementById('grand-total').textContent   = (aseoTotal + uniformTotal).toFixed(1);
+}
+window.recalcAll = recalcAll;
+
+function saveEval() {
+  recalcAll();
+  const members = parseInt(document.getElementById('member-count').value) || 1;
+  const total   = document.getElementById('grand-total').textContent;
+  const evalData = {
+    clubId: state.currentClub.id,
+    clubName: state.currentClub.name,
+    members,
+    total,
+    timestamp: Date.now(),
+    data: JSON.parse(JSON.stringify(currentEvalData))
+  };
+  window._dbSet(window._dbRef(window._db, 'evals/' + state.currentClub.id), evalData)
+    .then(() => { toast('✓ Evaluación guardada'); backToList(); })
+    .catch(() => toast('Error al guardar'));
+}
+window.saveEval = saveEval;
+
+// ============================================================
+// ADMIN — RESUMEN
+// ============================================================
+function renderAdminResumen() {
+  const clubs   = Object.keys(state.clubs).length;
+  const evalued = Object.keys(state.evals || {}).length;
+  const evUsers = Object.values(state.users).filter(u => u.role === 'evaluador').length;
+
+  document.getElementById('admin-metrics').innerHTML = `
+    <div class="metric-card"><div class="metric-val">${clubs}</div><div class="metric-lbl">Clubes registrados</div></div>
+    <div class="metric-card"><div class="metric-val">${evalued}</div><div class="metric-lbl">Evaluados</div></div>
+    <div class="metric-card"><div class="metric-val">${clubs - evalued}</div><div class="metric-lbl">Pendientes</div></div>
+    <div class="metric-card"><div class="metric-val">${evUsers}</div><div class="metric-lbl">Evaluadores</div></div>
+  `;
+
+  const sorted = Object.entries(state.clubs)
+    .map(([id, c]) => ({ id, ...c, ev: state.evals && state.evals[id] }))
+    .sort((a, b) => (parseFloat(b.ev?.total) || 0) - (parseFloat(a.ev?.total) || 0));
+
+  document.getElementById('admin-results-body').innerHTML = sorted.map((c, idx) => {
+    const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : '';
+    return `<tr class="${rankClass}">
+      <td style="font-size:13px;font-weight:700;text-align:center">${c.ev ? idx + 1 : '—'}</td>
+      <td style="font-size:13px;font-weight:600">${c.name}</td>
+      <td>${catBadgeHtml(c.cat)}</td>
+      <td style="font-size:13px;text-align:center">${c.ev ? c.ev.members : '—'}</td>
+      <td style="font-size:13px;text-align:center;font-weight:700;color:${c.ev ? 'var(--color-primary)' : 'var(--color-text-muted)'}">${c.ev ? c.ev.total : '—'}</td>
+      <td><span class="badge" style="${c.ev ? 'background:#E1F5EE;color:#0F6E56' : 'background:#F1EFE8;color:#5F5E5A'}">${c.ev ? 'Evaluado' : 'Pendiente'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// ADMIN — CLUBES
+// ============================================================
+function renderAdminClubsList() {
+  const el = document.getElementById('admin-clubs-list');
+  if (!el) return;
+  const list = Object.entries(state.clubs);
+  if (!list.length) { el.innerHTML = '<div style="font-size:13px;color:var(--color-text-muted)">Sin clubes</div>'; return; }
+  el.innerHTML = list.map(([id, c]) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border);">
+      <div>
+        <div style="font-size:14px;font-weight:600">${c.name}</div>
+        <div style="font-size:12px;color:var(--color-text-muted)">${catLabel(c.cat)} · ${c.evaluador || 'Sin evaluador'}</div>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="deleteClub('${id}')">Eliminar</button>
+    </div>
+  `).join('');
+}
+
+function addClub() {
+  const name = document.getElementById('new-club-name').value.trim();
+  const cat  = document.getElementById('new-club-cat').value;
+  const evalName = document.getElementById('new-club-eval').value;
+  if (!name) { toast('Escribe el nombre del club'); return; }
+  const id = 'club_' + Date.now();
+  window._dbSet(window._dbRef(window._db, 'clubs/' + id), { name, cat, evaluador: evalName })
+    .then(() => { document.getElementById('new-club-name').value = ''; toast('Club agregado'); })
+    .catch(() => toast('Error al agregar club'));
+}
+window.addClub = addClub;
+
+function deleteClub(id) {
+  if (!confirm('¿Eliminar este club?')) return;
+  window._dbRemove(window._dbRef(window._db, 'clubs/' + id));
+  window._dbRemove(window._dbRef(window._db, 'evals/' + id));
+  toast('Club eliminado');
+}
+window.deleteClub = deleteClub;
+
+function populateEvalSelect() {
+  const sel = document.getElementById('new-club-eval');
+  if (!sel) return;
+  const evaluadores = Object.values(state.users).filter(u => u.role === 'evaluador');
+  sel.innerHTML = evaluadores.length
+    ? evaluadores.map(u => `<option value="${u.name}">${u.name}</option>`).join('')
+    : '<option value="">Sin evaluadores</option>';
+}
+
+// ============================================================
+// ADMIN — USUARIOS
+// ============================================================
+function renderUsersList() {
+  const el = document.getElementById('users-list');
+  if (!el) return;
+  const list = Object.entries(state.users);
+  el.innerHTML = list.map(([id, u]) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border);">
+      <div>
+        <div style="font-size:14px;font-weight:600">${u.name}</div>
+        <div style="font-size:12px;color:var(--color-text-muted)">${u.role === 'admin' ? 'Administrador' : 'Evaluador'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addUser() {
+  const name = document.getElementById('new-user-name').value.trim();
+  const pass = document.getElementById('new-user-pass').value.trim();
+  const role = document.getElementById('new-user-role').value;
+  if (!name || !pass) { toast('Completa nombre y contraseña'); return; }
+  const id = 'u_' + Date.now();
+  window._dbSet(window._dbRef(window._db, 'users/' + id), { name, pass, role })
+    .then(() => {
+      document.getElementById('new-user-name').value = '';
+      document.getElementById('new-user-pass').value = '';
+      toast('Usuario agregado');
+    })
+    .catch(() => toast('Error al agregar usuario'));
+}
+window.addUser = addUser;
+
+// ============================================================
+// ADMIN — CONFIG
+// ============================================================
+function saveConfig() {
+  const campName = document.getElementById('config-camp-name').value.trim() || 'Campamento 2025';
+  const logoUrl  = document.getElementById('config-logo-url').value.trim();
+  window._dbSet(window._dbRef(window._db, 'config'), { campName, logoUrl })
+    .then(() => toast('✓ Configuración guardada'))
+    .catch(() => toast('Error al guardar'));
+}
+window.saveConfig = saveConfig;
+</script>
+</body>
+</html>
