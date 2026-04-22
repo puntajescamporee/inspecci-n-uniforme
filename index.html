@@ -422,10 +422,10 @@ window.initApp = function() {
       updateLogo();
     }
   });
-  window._on(window._ref(window._db,'admins'), s => { S.admins=s.exists()?s.val(){}; });
-  window._on(window._ref(window._db,'users'), s => { S.users=s.exists()?s.val(){}; renderUsersList(); populateEvalSelect(); });
-  window._on(window._ref(window._db,'clubs'), s => { S.clubs=s.exists()?s.val(){}; renderClubLists(); renderAdminClubsList(); renderAdminResumen(); });
-  window._on(window._ref(window._db,'evals'), s => { S.evals=s.exists()?s.val(){}; renderClubLists(); renderAdminResumen(); });
+  window._on(window._ref(window._db,'admins'), s => { S.admins=s.exists()?s.val():{}; });
+  window._on(window._ref(window._db,'users'), s => { S.users=s.exists()?s.val():{}; renderUsersList(); populateEvalSelect(); });
+  window._on(window._ref(window._db,'clubs'), s => { S.clubs=s.exists()?s.val():{}; renderClubLists(); renderAdminClubsList(); renderAdminResumen(); });
+  window._on(window._ref(window._db,'evals'), s => { S.evals=s.exists()?s.val():{}; renderClubLists(); renderAdminResumen(); });
 };
 
 function updateLogo() {
